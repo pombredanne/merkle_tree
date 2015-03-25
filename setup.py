@@ -1,3 +1,4 @@
+import os.path
 from setuptools import setup
 import merkle_tree
 
