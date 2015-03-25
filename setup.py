@@ -1,9 +1,15 @@
 from setuptools import setup
 import merkle_tree
 
+LONG_DESCRIPTION = ""
+if os.path.exists("README.md"):
+    LONG_DESCRIPTION = open("README.md", "r").read()
+
 setup(
    name = 'MerkleTree',
    version = merkle_tree.__version__,
+   description='CLI to calculate Merkle Tree based on botocore implementation.',
+   long_description=LONG_DESCRIPTION,
    py_modules=['merkle_tree'],
    author='George Yoshida',
    url='https://github.com/quiver/merkle_tree',
