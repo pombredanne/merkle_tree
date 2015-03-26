@@ -9,68 +9,67 @@ Internally, this is a ultra-thin wrapper for botocore's Merkle Tree implementati
 
 1. Install merkle_tree
 
-use pip
+    use pip
 
-    $ sudo pip install merkle_tree
+        $ sudo pip install merkle_tree
 
 2. Calculate hash
 
-chunk size is 1MB and sha256 hash function is used.
+    chunk size is 1MB and sha256 hash function is used.
 
-    $ merkle filename
-    3aef1c637ae8997d84b98f835c193556bca3892e4a6ec1e84dd3e664ecf125e1
+        $ merkle filename
+        3aef1c637ae8997d84b98f835c193556bca3892e4a6ec1e84dd3e664ecf125e1
 
-If you want a binary hash:
+    If you want a binary hash:
 
-    $ merkle --output binary filename | hexdump
-    0000000 ef3a 631c e87a 7d99 b984 838f 195c 5635
-    0000010 a3bc 2e89 6e4a e8c1 d34d 64e6 f1ec e125
-    0000020 000a
-    0000021
-
+        $ merkle --output binary filename | hexdump
+        0000000 ef3a 631c e87a 7d99 b984 838f 195c 5635
+        0000010 a3bc 2e89 6e4a e8c1 d34d 64e6 f1ec e125
+        0000020 000a
+        0000021
 
 ## Multi-part upload an archive to AWS Glacier
 
 1. Create an archive to upload
 
-create a test file(2.5MB)
+    create a test file(2.5MB)
 
-    $ dd if=/dev/urandom of=FILENAME  bs=1024 count=2560 # 2560 = 1024 * 2.5
+        $ dd if=/dev/urandom of=FILENAME  bs=1024 count=2560 # 2560 = 1024 * 2.5
 
 2. Initiate multipart upload
 
-BLOCK_SIZE can be as small as 1MB.
+    BLOCK_SIZE can be as small as 1MB.
 
-    $ BLOCK_SIZE=1048576 # 1048576 = 1MB
-    $ aws glacier initiate-multipart-upload --account-id - --vault-name $VAULT_NAME --part-size $BLOCK_SIZE
+        $ BLOCK_SIZE=1048576 # 1048576 = 1MB
+        $ aws glacier initiate-multipart-upload --account-id - --vault-name $VAULT_NAME --part-size $BLOCK_SIZE
 
-If successfull, upload_id will be returned.
+    If successfull, upload_id will be returned.
 
 3. split an archive into pieces
 
-BLOCK_SIZE must be same as the one you specified at initiate phase.  
+    BLOCK_SIZE must be same as the one you specified at initiate phase.  
 
-    $ split -b $BLOCK_SIZE -d FILENAME 
-    $ ls -l
-    total 5120
-    -rw-rw-r-- 1 jsmith jsmith 2621440 Mar 27 00:52 FILENAME
-    -rw-rw-r-- 1 jsmith jsmith 1048576 Mar 27 00:52 x00
-    -rw-rw-r-- 1 jsmith jsmith 1048576 Mar 27 00:52 x01
-    -rw-rw-r-- 1 jsmith jsmith  524288 Mar 27 00:52 x02
+        $ split -b $BLOCK_SIZE -d FILENAME 
+        $ ls -l
+        total 5120
+        -rw-rw-r-- 1 jsmith jsmith 2621440 Mar 27 00:52 FILENAME
+        -rw-rw-r-- 1 jsmith jsmith 1048576 Mar 27 00:52 x00
+        -rw-rw-r-- 1 jsmith jsmith 1048576 Mar 27 00:52 x01
+        -rw-rw-r-- 1 jsmith jsmith  524288 Mar 27 00:52 x02
 
 4. multipart upload to Glacier
 
-You can upload parts in any order.
+    You can upload parts in any order.
 
-    $ aws glacier upload-multipart-part --account-id - --vault-name $VAULT_NAME --upload-id $UPLOAD_ID --range 'bytes 0-1048575/*' --body x00
-    $ aws glacier upload-multipart-part --account-id - --vault-name $VAULT_NAME --upload-id $UPLOAD_ID --range 'bytes 1048576-2097151/*' --body x01
-    $ aws glacier upload-multipart-part --account-id - --vault-name $VAULT_NAME --upload-id $UPLOAD_ID --range 'bytes 2097152-2621439/*' --body x02
+        $ aws glacier upload-multipart-part --account-id - --vault-name $VAULT_NAME --upload-id $UPLOAD_ID --range 'bytes 0-1048575/*' --body x00
+        $ aws glacier upload-multipart-part --account-id - --vault-name $VAULT_NAME --upload-id $UPLOAD_ID --range 'bytes 1048576-2097151/*' --body x01
+        $ aws glacier upload-multipart-part --account-id - --vault-name $VAULT_NAME --upload-id $UPLOAD_ID --range 'bytes 2097152-2621439/*' --body x02
 
 5. complete multipart upload
 
-Now is the time to use `merkle` command!
+    Now is the time to use `merkle` command!
 
-    $ CHECKSUM=`merkle $FILENAME`
-    $ ARCHIVE_SIZE=`wc -c < FILENAME`
-    $ aws glacier complete-multipart-upload --account-id - --vault-name $VAULT_NAME --upload-id $UPLOAD_ID --archive-size $ARCHIVE_SIZE --checksum $CHECKSUM
+        $ CHECKSUM=`merkle FILENAME`
+        $ ARCHIVE_SIZE=`wc -c < FILENAME`
+        $ aws glacier complete-multipart-upload --account-id - --vault-name $VAULT_NAME --upload-id $UPLOAD_ID --archive-size $ARCHIVE_SIZE --checksum $CHECKSUM
 
