@@ -11,6 +11,7 @@ CLI to calculate Merkle Tree
 
 1. Install merkle_tree
 
+
     $ sudo pip install merkle_tree
 
 2. Calculate hash
@@ -34,9 +35,11 @@ If you want a binary hash:
 
 1. Create an archive to upload
 
+
     $ dd if=/dev/urandom of=FILENAME  bs=1024 count=2560 # 2560 = 1024 * 2.5
 
 2. Initiate multipart upload
+
 
     $ BLOCK_SIZE=1048576 # 1048576 = 1MB
     $ aws glacier initiate-multipart-upload --account-id - --vault-name $VAULT_NAME --part-size $BLOCK_SIZE
@@ -44,6 +47,7 @@ If you want a binary hash:
 upload_id is returned.
 
 3. split an archive into pieces
+
 
     $ split -b $BLOCK_SIZE -d FILENAME 
     $ ls -l
@@ -55,11 +59,13 @@ upload_id is returned.
 
 4. multipart upload to Glacier
 
+
     $ aws glacier upload-multipart-part --account-id - --vault-name $VAULT_NAME --upload-id $UPLOAD_ID --range 'bytes 0-1048575/*' --body x00
     $ aws glacier upload-multipart-part --account-id - --vault-name $VAULT_NAME --upload-id $UPLOAD_ID --range 'bytes 1048576-2097151/*' --body x01
     $ aws glacier upload-multipart-part --account-id - --vault-name $VAULT_NAME --upload-id $UPLOAD_ID --range 'bytes 2097152-2621439/*' --body x02
 
 5. complete multipart upload
+
 
     $ CHECKSUM=`merkle $FILENAME`
     $ ARCHIVE_SIZE=`wc -c < FILENAME`
