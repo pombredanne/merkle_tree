@@ -1,16 +1,15 @@
 # merkle_tree
 
-`merkle_tree` is a command line program to calculate Merkle Tree hashes.
+`merkle_tree` is a command line program to calculate [Merkle Tree](http://en.wikipedia.org/wiki/Merkle_tree) hashes.
 Internally, this is a ultra-thin wrapper for botocore's Merkle Tree implementation.
 [botocore](https://github.com/boto/botocore) (low-level interface to AWS) itself uses it for
 [Glacier API]( http://docs.aws.amazon.com/amazonglacier/latest/dev/checksum-calculations.html).
-
-CLI to calculate Merkle Tree
 
 ## Getting Started
 
 1. Install merkle_tree
 
+use pip
 
     $ sudo pip install merkle_tree
 
@@ -32,22 +31,24 @@ If you want a binary hash:
 
 ## Multi-part upload an archive to AWS Glacier
 
-
 1. Create an archive to upload
 
+create a test file(2.5MB)
 
     $ dd if=/dev/urandom of=FILENAME  bs=1024 count=2560 # 2560 = 1024 * 2.5
 
 2. Initiate multipart upload
 
+BLOCK_SIZE can be as small as 1MB.
 
     $ BLOCK_SIZE=1048576 # 1048576 = 1MB
     $ aws glacier initiate-multipart-upload --account-id - --vault-name $VAULT_NAME --part-size $BLOCK_SIZE
 
-upload_id is returned.
+If successfull, upload_id will be returned.
 
 3. split an archive into pieces
 
+BLOCK_SIZE must be same as the one you specified at initiate phase.  
 
     $ split -b $BLOCK_SIZE -d FILENAME 
     $ ls -l
@@ -59,6 +60,7 @@ upload_id is returned.
 
 4. multipart upload to Glacier
 
+You can upload parts in any order.
 
     $ aws glacier upload-multipart-part --account-id - --vault-name $VAULT_NAME --upload-id $UPLOAD_ID --range 'bytes 0-1048575/*' --body x00
     $ aws glacier upload-multipart-part --account-id - --vault-name $VAULT_NAME --upload-id $UPLOAD_ID --range 'bytes 1048576-2097151/*' --body x01
@@ -66,6 +68,7 @@ upload_id is returned.
 
 5. complete multipart upload
 
+Now is the time to use `merkle` command!
 
     $ CHECKSUM=`merkle $FILENAME`
     $ ARCHIVE_SIZE=`wc -c < FILENAME`
