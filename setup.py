@@ -1,10 +1,9 @@
 import os.path
 from setuptools import setup
-import merkle_tree
 
 setup(
-   name = 'MerkleTree',
-   version = merkle_tree.__version__,
+   name = 'merkle-tree',
+   version = '0.1',
    description='CLI to calculate Merkle Tree based on botocore implementation.',
    py_modules=['merkle_tree'],
    author='George Yoshida',
